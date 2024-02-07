@@ -1,15 +1,15 @@
 #include "get_next_line.h"
 
-int gn_strlen(char *str)
+int    gn_strlen(char *str)
 {
-    int i;
+    int    i;
 
     i = 0;
-    if (!str)
-        return (0);
-    while (str[i] != '\n' && str[i] != '\0')
+    if(!str)
+        return(0);
+    while(str[i] != '\0' && str[i] != '\n')
         i++;
-    if (str[i] == '\n')
+    if(str[i] == '\n')
         i++;
     return (i);
 }
@@ -17,9 +17,9 @@ int gn_strlen(char *str)
 char    *gn_strjoin(char *s1, char *s2)
 {
     char    *new_str;
-    int     len;
-    int     i;
-    int     j;
+    int    len;
+    int    i;
+    int    j;
 
     i = 0;
     j = 0;
@@ -28,87 +28,68 @@ char    *gn_strjoin(char *s1, char *s2)
     if (!new_str)
     {
         free(s1);
-        return(NULL);
+        return (NULL);
     }
     while (s1 && s1[i])
     {
         new_str[i] = s1[i];
         i++;
     }
-    while (s2 && s2[j])
+    while(s2 && s2[j])
     {
         new_str[i] = s2[j];
-        if (new_str[i] == '\n')
+        if(new_str[i] == '\n')
             break ;
         i++;
         j++;
     }
     new_str[len] = '\0';
     free(s1);
-    return (new_str);
+    return(new_str);
 }
 
-int update_buffer(char *buff)
+int    update_buffer(char *buff)
 {
-    int flag;
-    int i;
-    int j;
+    int    i;
+    int    j;
+    int    flag;
 
     flag = 0;
     i = 0;
     j = 0;
     while(buff[i])
     {
-        if (flag)
+        if(flag)
             buff[j++] = buff[i];
-        if (buff[i] == '\n')
+        if(buff[i] == '\n')
             flag = 1;
         buff[i++] = '\0';
     }
-    return(flag);
+    return (flag);
 }
 
 char *get_next_line(int fd)
 {
-    static char buffer[BUFFER_SIZE];
+    static char buffer[BUFFER_SIZE + 1];
     char        *line;
-    int         bytes;
+    int          bytes;
 
-    if (fd < 0 || BUFFER_SIZE <= 0)
+    if(fd < 0 || BUFFER_SIZE <= 0)
         return (NULL);
     line = NULL;
     bytes = 0;
-    while(buffer[0] || read(fd, buffer, BUFFER_SIZE) > 0 )
+    while (buffer[0] || bytes = read(fd, buffer, BUFFER_SIZE) > 0)
     {
         line = gn_strjoin(line, buffer);
-        if(!line)
+        if (!line)
             return (NULL);
         if(update_buffer(buffer))
-            break ;
+            break ;   
     }
-    if(line && bytes < 0)
+    if (line && bytes < 0)
     {
         free(line);
         line = NULL;
     }
-    return (line);
-}
-
-#include <stdio.h>
-#include <fcntl.h>
-
-int main(void)
-{
-    int i;
-    int fd;
-
-    i = 0;
-    fd = open("file.txt", O_RDONLY);
-    while (i < 3)
-    {
-        printf("%s", get_next_line(fd));
-        i++;
-    };
-    close(fd);
-    return(0);
+    return(line);
 }
