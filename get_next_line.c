@@ -1,168 +1,114 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   get_next_line.c                                    :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: rluari <rluari@student.42.fr>              +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/12/13 13:03:07 by rluari            #+#    #+#             */
-/*   Updated: 2023/12/13 18:47:59 by rluari           ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "get_next_line.h"
-#include <fcntl.h>
-#include <stdio.h>
 
-int ft_strlen(char *str)
+int gn_strlen(char *str)
 {
-	int i = 0;
+    int i;
 
-	while (str[i])
-		i++;
-	return (i);
+    i = 0;
+    if (!str)
+        return (0);
+    while (str[i] != '\n' && str[i] != '\0')
+        i++;
+    if (str[i] == '\n')
+        i++;
+    return (i);
 }
 
-char *ft_strchr(char *str, int c)
+char    *gn_strjoin(char *s1, char *s2)
 {
-	int i = 0;
-	
-	if (!str)
-		return (NULL);
-	while (str[i])
-	{
-		if (str[i] == (char)c)
-			return ((char *)(str + i));
-		i++;
-	}
-	if (c == '\0')
-		return ((char *)(str + i));
-	return (NULL);
+    char    *new_str;
+    int     len;
+    int     i;
+    int     j;
+
+    i = 0;
+    j = 0;
+    len = gn_strlen(s1) + gn_strlen(s2);
+    new_str = (char *)malloc(sizeof(char) * len + 1);
+    if (!new_str)
+    {
+        free(s1);
+        return(NULL);
+    }
+    while (s1 && s1[i])
+    {
+        new_str[i] = s1[i];
+        i++;
+    }
+    while (s2 && s2[j])
+    {
+        new_str[i] = s2[j];
+        if (new_str[i] == '\n')
+            break ;
+        i++;
+        j++;
+    }
+    new_str[len] = '\0';
+    free(s1);
+    return (new_str);
 }
 
-char	*ft_strjoin(char *str, char *buf)
+int update_buffer(char *buff)
 {
-	int i = -1, j = 0;
-	int len;
-	char *res;
+    int flag;
+    int i;
+    int j;
 
-	if (!str)
-	{
-		str = (char *)malloc(sizeof(char) * 1);
-		if (!str)
-			return (NULL);
-		str[0] = '\0';
-	}
-	if (!str || !buf)
-		return (NULL);
-	len = ft_strlen(str) + ft_strlen(buf);
-	res = (char *)malloc(sizeof(char) * (len + 1));
-	if (!res)
-		return (NULL);
-	if (str)
-		while (str[++i])
-			res[i] = str[i];
-	while (buf[j])
-		res[i++] = buf[j++];
-	res[len] = '\0';
-	free(str);
-	return (res);
-}
-
-char	*ft_new(char *str)
-{
-	int i = 0, j = 0;
-	char *new;
-
-	while (str[i] && str[i] != '\n')
-		i++;
-	if (!str[i])
-		return(free(str), NULL);
-	new = (char *)malloc(sizeof(char) * (ft_strlen(str) - i + 1));
-	if (!new)	
-		return (NULL);
-	i++;
-	while (str[i])
-		new[j++] = str[i++];
-	new[j] = '\0';
-	free(str);
-	return (new);
-}
-
-char	*ft_line(char *str)
-{
-	int i = 0;
-	char *line;
-	
-	if (!str[i])
-		return (NULL);
-	while (str[i] && str[i] != '\n')
-		i++;
-	line = (char *)malloc(sizeof(char) * (i + 2));
-	if (!line)
-		return (NULL);
-	i = 0;
-	while (str[i] && str[i] != '\n')
-	{
-		line[i] = str[i];
-		i++;
-	}	
-	if (str[i] == '\n')
-	{
-		line[i] = str[i];
-		i++;
-	}
-	line[i] = '\0';
-	return (line);
-}
-
-char	*ft_read(int fd, char *str)
-{
-	char 	*buf;
-	int		rc = 1;
-
-	buf = malloc(sizeof(char) * BUFFER_SIZE + 1);
-	if (!buf)
-		return (NULL);
-	while (!ft_strchr(str, '\n') && rc != 0)
-	{
-		rc = read(fd, buf, BUFFER_SIZE);
-		if (rc == -1)
-			return(free(buf), free(str), NULL);
-		buf[rc] = '\0';
-		str = ft_strjoin(str, buf);
-	}
-	free(buf);
-	return (str);
-	
+    flag = 0;
+    i = 0;
+    j = 0;
+    while(buff[i])
+    {
+        if (flag)
+            buff[j++] = buff[i];
+        if (buff[i] == '\n')
+            flag = 1;
+        buff[i++] = '\0';
+    }
+    return(flag);
 }
 
 char *get_next_line(int fd)
 {
-	char *line;
-	static char *str;
-	if (fd < 0 || BUFFER_SIZE <= 0)
-		return (NULL);
-	str = ft_read(fd, str);
-	if (!str)
-		return (NULL);
-	line = ft_line(str);
-	str = ft_new(str);
-	return (line);
+    static char buffer[BUFFER_SIZE];
+    char        *line;
+    int         bytes;
+
+    if (fd < 0 || BUFFER_SIZE <= 0)
+        return (NULL);
+    line = NULL;
+    bytes = 0;
+    while(buffer[0] || read(fd, buffer, BUFFER_SIZE) > 0 )
+    {
+        line = gn_strjoin(line, buffer);
+        if(!line)
+            return (NULL);
+        if(update_buffer(buffer))
+            break ;
+    }
+    if(line && bytes < 0)
+    {
+        free(line);
+        line = NULL;
+    }
+    return (line);
 }
 
-/*int	main(void)
+#include <stdio.h>
+#include <fcntl.h>
+
+int main(void)
 {
-	char *line;
-	int fd;
-	fd = open("test.txt", O_RDONLY);
-	line = get_next_line(fd);
-	while (line != NULL)
-	{
-		printf("line:  %s", line);
-		free(line);
-		line = get_next_line(fd);
-	}
-	close(fd);
-	return (0);
-}*/
+    int i;
+    int fd;
+
+    i = 0;
+    fd = open("file.txt", O_RDONLY);
+    while (i < 3)
+    {
+        printf("%s", get_next_line(fd));
+        i++;
+    };
+    close(fd);
+    return(0);
+}
